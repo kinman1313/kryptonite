@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+    graphsense-rest:
+        build:
+            context: .         # Use current directory (Dockerfile is here)
+            dockerfile: Dockerfile
+        container_name: graphsense-rest
+        ports:
+            - "9000:9000"
+        environment:
+            GRAPHSENSE_CURRENCY: "btc"
+            GRAPHSENSE_API_HOST: "0.0.0.0"
+            GRAPHSENSE_API_PORT: 9000
+        volumes:
+            - ./instance:/srv/graphsense-rest/instance
