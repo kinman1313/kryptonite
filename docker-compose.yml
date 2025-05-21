@@ -1,16 +1,50 @@
 version: '3.8'
 
 services:
-    graphsense-rest:
-        build:
-            context: .         # Use current directory (Dockerfile is here)
-            dockerfile: Dockerfile
-        container_name: graphsense-rest
-        ports:
-            - "9000:9000"
-        environment:
-            GRAPHSENSE_CURRENCY: "btc"
-            GRAPHSENSE_API_HOST: "0.0.0.0"
-            GRAPHSENSE_API_PORT: 9000
-        volumes:
-            - ./instance:/srv/graphsense-rest/instance
+  kryptonite-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kryptonite-app
+    ports:
+      - "8080:8000" # Exposing Kryptonite app on host port 8080, container port 8000
+    environment:
+      - GRAPHSENSE_API_URL=http://graphsense-api:9000 # Placeholder, to be actually used by main.py
+    # depends_on:
+    #   - graphsense-api # Uncomment if/when graphsense-api service is available
+    volumes:
+      - .:/app # Mount current directory to /app for development (optional)
+
+#  graphsense-rest:
+#    build:
+#        context: . # This was problematic as root Dockerfile is now for kryptonite-app
+#        dockerfile: Dockerfile # Original Dockerfile was empty, then became Kryptonite's
+#    container_name: graphsense-rest
+#    ports:
+#        - "9000:9000" # This was intended for the GraphSense API
+#    environment:
+#        GRAPHSENSE_CURRENCY: "btc"
+#        GRAPHSENSE_API_HOST: "0.0.0.0"
+#        GRAPHSENSE_API_PORT: 9000
+#    volumes:
+#        - ./instance:/srv/graphsense-rest/instance # This volume mount might be specific to a real GraphSense API
+#    # --- Missing GraphSense API ---
+#    # The actual GraphSense API implementation expected by main.py (at http://graphsense-api:9000)
+#    # is not available in the 'graphsense-REST' directory or as a pre-built image.
+#    # The following is a placeholder for what a graphsense-api service definition might look like
+#    # if the API source was in './graphsense-REST' or if using a pre-built image.
+#
+#  graphsense-api:
+#    # If building from source (assuming code and Dockerfile in ./graphsense-REST):
+#    # build:
+#    #   context: ./graphsense-REST
+#    #   dockerfile: Dockerfile
+#    # image: your_custom_graphsense_api_image # Or, if using a pre-built image
+#    container_name: graphsense-api
+#    ports:
+#      - "9000:9000" # Default GraphSense port
+#    environment:
+#      # Add any necessary environment variables for GraphSense API
+#      GRAPHSENSE_CURRENCY: "btc"
+#    # volumes:
+#    #   - ./graphsense_data:/var/lib/graphsense # Example volume for data persistence
