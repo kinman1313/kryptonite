@@ -1,12 +1,13 @@
 # Kryptonite - Crypto Wallet Verification API
 
-Kryptonite is a FastAPI-based application designed to check cryptocurrency wallet addresses against a local blacklist and fetch address tags from a GraphSense-compatible API to assess risk.
+Kryptonite is a FastAPI-based application designed to check cryptocurrency wallet addresses against local and external blacklists, and fetch address tags from a GraphSense-compatible API to assess risk.
 
 ## Features
 
-*   Verifies crypto addresses against a maintained `blacklist.txt`.
-*   Integrates with a GraphSense API to retrieve address tags (e.g., identifying tags like "exchange", "miner", "scam").
-*   Provides a risk level and score based on local blacklist status and GraphSense tags.
+*   Verifies crypto addresses against a user-maintained local `blacklist.txt`.
+*   Integrates with Polkadot.js phishing lists (`address.json` for scam addresses, `all.json` for scam domains) to identify known malicious entities, primarily within the Polkadot/Substrate ecosystem.
+*   Integrates with a GraphSense API (if configured) to retrieve address tags (e.g., identifying tags like "exchange", "miner", "scam").
+*   Provides a risk level and score based on local blacklist status, Polkadot.js scam lists, and GraphSense tags.
 *   Containerized with Docker and managed via `docker-compose`.
 
 ## Project Structure
@@ -15,9 +16,9 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 *   `Dockerfile`: Used to build the Docker image for the Kryptonite application.
 *   `docker-compose.yml`: Defines and manages the application services.
 *   `requirements.txt`: Python dependencies.
-*   `blacklist.txt`: A list of sanctioned cryptocurrency addresses (one address per line).
-*   `graphsense-REST/`: Intended location for the GraphSense API implementation (currently appears to be missing).
-*   `scripts/update_blacklists.sh`: A script presumably for updating the blacklist files (its functionality is not fully integrated or documented within the core app).
+*   `blacklist.txt`: A list of cryptocurrency addresses manually added by the user for blacklisting.
+*   `graphsense-REST/`: Intended location for a GraphSense API implementation (currently appears to be missing from this repository).
+*   `scripts/update_blacklists.sh`: A script presumably for updating blacklist files (its functionality is not fully integrated or documented within the core app).
 
 ## Setup and Running the Application
 
@@ -28,27 +29,40 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 
 ### Configuration
 
-1.  **GraphSense API:**
-    *   The Kryptonite application requires a running GraphSense API instance. The code for this API is expected to be in the `graphsense-REST` directory or available as a Docker image, but it appears to be missing from this repository.
-    *   You need to configure the base URL of your GraphSense API by setting the `GRAPHSENSE_API_BASE_URL` environment variable for the `kryptonite-app` service in the `docker-compose.yml` file, or by setting it in your environment if running outside of docker-compose.
-    *   Example: `GRAPHSENSE_API_BASE_URL=http://localhost:9000` (if your GraphSense API is running on `localhost:9000`).
-    *   The `docker-compose.yml` includes a commented-out placeholder for a `graphsense-api` service. You will need to uncomment and configure this, or provide the GraphSense API via other means.
+The application uses environment variables for configuration. These can be set in your shell or directly in the `docker-compose.yml` file for the `kryptonite-app` service.
 
-2.  **Blacklist:**
-    *   The `blacklist.txt` file in the root directory is used to populate the list of locally sanctioned addresses. Add one address per line.
+1.  **GraphSense API (Optional):**
+    *   The Kryptonite application can connect to a GraphSense API instance for enhanced address analysis.
+    *   Configure the base URL of your GraphSense API using the `GRAPHSENSE_API_BASE_URL` environment variable.
+    *   Example: `GRAPHSENSE_API_BASE_URL=http://localhost:9000`
+    *   If not set, GraphSense checks will be skipped.
+    *   The `docker-compose.yml` includes a commented-out placeholder for a `graphsense-api` service if you wish to run one locally.
+
+2.  **Polkadot.js Phishing Lists (Enabled by Default):**
+    *   The application fetches known scam addresses and domains from lists maintained by the Polkadot.js project. This is primarily focused on entities within the Polkadot/Substrate ecosystem.
+    *   The URLs for these lists can be customized via environment variables:
+        *   `POLKADOT_ADDRESS_JSON_URL`: URL for the scam address list.
+            *   Default: `https://polkadot.js.org/phishing/address.json`
+        *   `POLKADOT_ALL_JSON_URL`: URL for the scam domain list. (Note: The domain list is loaded but not currently used by the `/verify/{address}` endpoint).
+            *   Default: `https://polkadot.js.org/phishing/all.json`
+
+3.  **Local Blacklist:**
+    *   The `blacklist.txt` file in the root directory can be used to populate a local list of sanctioned/blocked addresses. Add one address per line. This list is checked in addition to the Polkadot.js scam address list.
 
 ### Running with Docker Compose
 
 1.  **Clone the repository (if you haven't already).**
 2.  **Navigate to the project directory.**
-3.  **Configure `GRAPHSENSE_API_BASE_URL`:**
-    *   You can set this environment variable in your shell, or directly in the `docker-compose.yml` file for the `kryptonite-app` service.
+3.  **Configure Environment Variables (Optional):**
+    *   If you need to change the default URLs for GraphSense or Polkadot.js lists, modify the `environment` section in `docker-compose.yml` for the `kryptonite-app` service:
     ```yaml
     services:
       kryptonite-app:
         # ... other configurations ...
         environment:
-          - GRAPHSENSE_API_BASE_URL=http://your-graphsense-api-url:9000
+          - GRAPHSENSE_API_URL=http://your-graphsense-api-url:9000 # Example
+          - POLKADOT_ADDRESS_JSON_URL=https://your-custom-address-list.json # Example
+          - POLKADOT_ALL_JSON_URL=https://your-custom-domain-list.json # Example
     ```
 4.  **Build and start the services:**
     ```bash
@@ -72,38 +86,35 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 ### Verify Wallet Address
 
 *   **GET /verify/{address}**
-    *   Description: Verifies a given cryptocurrency address.
+    *   Description: Verifies a given cryptocurrency address against configured blacklists and (optionally) GraphSense.
     *   Path Parameter:
         *   `address` (string, required): The cryptocurrency address to verify.
-    *   Response (Success - Example):
+    *   Response (Success - Example, no blacklist hits):
         ```json
         {
           "address": "some_crypto_address",
           "sanctioned_by_local_blacklist": false,
+          "on_polkadot_scam_list": false,
           "graphsense_tags": [
             {
               "label": "Exchange",
               "source": "SomeGraphSenseSource",
-              "category": "organization",
-              "abuse": null,
-              "tagpack_uri": "http://example.com/tagpack",
-              "lastmod": 1678886400000,
-              "active": true,
-              "currency": "btc"
+              // ... other tag details
             }
           ],
           "risk_level": "low", // Possible values: "low", "medium", "high", "critical"
           "risk_score": 10     // Numerical score: 0-100
         }
         ```
-    *   Response (GraphSense API not configured):
+    *   Response (Address on Polkadot.js scam list):
         ```json
         {
-          "address": "another_crypto_address",
+          "address": "polkadot_scam_address",
           "sanctioned_by_local_blacklist": false,
-          "graphsense_tags": ["GraphSense API not configured"],
-          "risk_level": "low",
-          "risk_score": 10
+          "on_polkadot_scam_list": true,
+          "graphsense_tags": ["GraphSense API not configured"], // Or actual tags if API is configured
+          "risk_level": "high", 
+          "risk_score": 90
         }
         ```
     *   Response (Address on local blacklist):
@@ -111,7 +122,8 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
         {
           "address": "sanctioned_address",
           "sanctioned_by_local_blacklist": true,
-          "graphsense_tags": ["GraphSense API not configured"], // Or actual tags if API is configured
+          "on_polkadot_scam_list": false, // Could also be true if on both
+          "graphsense_tags": ["GraphSense API not configured"], // Or actual tags
           "risk_level": "critical",
           "risk_score": 95
         }
@@ -121,7 +133,11 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 
 *   The `kryptonite-app` service in `docker-compose.yml` mounts the current directory into `/app` in the container. This allows for live reloading of code changes in `main.py` if `uvicorn` is run with the `--reload` flag (Note: the current `Dockerfile` CMD does not include `--reload`. For development, you might want to adjust the CMD in the `Dockerfile` or override the command in `docker-compose.yml`).
 
-## Missing Components
+## Important Notes & Missing Components
 
-*   **GraphSense API Implementation:** As mentioned, the actual GraphSense API that this application is designed to connect to (referred to as `graphsense-api` in `main.py` and `docker-compose.yml`) is not provided in this repository. You will need to set up and configure your own instance of a GraphSense-compatible API.
-*   **`scripts/update_blacklists.sh`:** The functionality and integration of this script are not fully clear from the existing codebase.
+*   **GraphSense API Implementation:** The GraphSense API is an optional external dependency. If you wish to use it, you need to set up your own instance and configure its URL via `GRAPHSENSE_API_BASE_URL`.
+*   **Scope of Polkadot.js Lists:** The scam lists from Polkadot.js primarily focus on the Polkadot/Substrate ecosystem. While they provide valuable data, they may not cover scams on all other blockchains.
+*   **Sanction Screening:** This application, with its current data sources, does **not** perform comprehensive global sanction screening (e.g., OFAC lists). For such requirements, dedicated commercial data providers or official government sources should be consulted.
+*   **`scripts/update_blacklists.sh`:** The functionality and integration of this script are not fully clear from the existing codebase and may require separate attention if its use is desired.
+
+```
