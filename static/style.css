@@ -1,0 +1,147 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #1a1a2e; /* Dark blue-ish background */
+    color: #e0e0e0; /* Light grey text */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align to top */
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container {
+    width: 100%;
+    max-width: 700px; /* Max width for content */
+    background-color: #24243e; /* Slightly lighter card background */
+    padding: 25px 35px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid #3a3a5e; /* Subtle border */
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #3a3a5e;
+    padding-bottom: 20px;
+}
+
+header h1 {
+    color: #c3c3e6; /* Lighter purple/blue for heading */
+    margin-bottom: 5px;
+}
+
+header p {
+    color: #a0a0c0; /* Muted text for subtitle */
+    font-size: 0.9em;
+}
+
+.input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+#walletAddress {
+    flex-grow: 1;
+    padding: 12px 15px;
+    border: 1px solid #3a3a5e;
+    border-radius: 6px;
+    background-color: #1a1a2e; /* Input background same as body */
+    color: #e0e0e0;
+    font-size: 1em;
+}
+
+#walletAddress::placeholder {
+    color: #707090;
+}
+
+#verifyButton {
+    padding: 12px 20px;
+    background-color: #4a4af5; /* Techy blue accent */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#verifyButton:hover {
+    background-color: #3a3ad5; /* Darker blue on hover */
+}
+
+#loadingIndicator {
+    text-align: center;
+    padding: 15px;
+    color: #a0a0c0;
+}
+
+#resultsArea {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #1e1e36; /* Slightly different background for results */
+    border-radius: 6px;
+    border: 1px solid #2c2c4a;
+    min-height: 50px; /* Ensure it's visible even when empty */
+}
+
+#resultsArea p {
+    margin: 8px 0;
+    word-wrap: break-word; /* Ensure long strings (like addresses) wrap */
+}
+
+#resultsArea .result-item {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #3a3a5e; /* Dashed separator for items */
+}
+#resultsArea .result-item:last-child {
+    border-bottom: none;
+}
+
+#resultsArea .label {
+    font-weight: bold;
+    color: #8a8ad0; /* Accent color for labels */
+}
+
+#resultsArea .value-true {
+    color: #ff7979; /* Reddish for true/high risk */
+    font-weight: bold;
+}
+
+#resultsArea .value-false {
+    color: #79ff79; /* Greenish for false/low risk */
+    font-weight: bold;
+}
+
+#resultsArea .risk-critical { color: #ff4d4d; font-weight: bold; text-transform: uppercase; }
+#resultsArea .risk-high { color: #ff8c4d; font-weight: bold; text-transform: uppercase; }
+#resultsArea .risk-medium { color: #ffd94d; font-weight: bold; text-transform: uppercase; }
+#resultsArea .risk-low { color: #4dff4d; font-weight: bold; text-transform: uppercase; }
+#resultsArea .risk-unknown { color: #a0a0c0; font-weight: bold; text-transform: uppercase; }
+
+
+#resultsArea ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+#resultsArea ul li {
+    background-color: #24243e;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #3a3a5e;
+    font-size: 0.8em;
+    color: #707090;
+}

@@ -1,4 +1,7 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware # Import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import httpx
 from dotenv import load_dotenv
 import os
@@ -8,6 +11,18 @@ import json # Added for JSON parsing
 load_dotenv()
 
 app = FastAPI()
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins for development
+    allow_credentials=True, # Allow credentials (cookies, authorization headers, etc.)
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # --- Existing Global Variables ---
 blacklist_file = 'blacklist.txt'
@@ -106,8 +121,12 @@ async def load_application_data():
     await fetch_and_process_polkadot_lists()
 
 
-@app.get("/")
-async def home():
+@app.get("/", response_class=FileResponse)
+async def serve_index():
+    return FileResponse('static/index.html')
+
+@app.get("/api_status")
+async def api_status():
     return {"message": "Crypto Wallet Verification API is running"}
 
 @app.get("/verify/{address}")
