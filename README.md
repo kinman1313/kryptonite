@@ -149,5 +149,3 @@ For developers or automated systems, the Kryptonite API can be accessed directly
 *   **GraphSense API Implementation:** The GraphSense API is an optional external dependency. If you wish to use it, you need to set up your own instance and configure its URL via `GRAPHSENSE_API_BASE_URL`. The repository does not provide a GraphSense API.
 *   **Scope of Polkadot.js Lists:** The scam lists from Polkadot.js primarily focus on the Polkadot/Substrate ecosystem. While they provide valuable data, they may not cover scams on all other blockchains.
 *   **Sanction Screening:** This application, with its current data sources, does **not** perform comprehensive global sanction screening (e.g., OFAC lists). For such requirements, dedicated commercial data providers or official government sources should be consulted.
-*   **`scripts/update_blacklists.sh`:** The functionality and integration of this script are not fully clear from the existing codebase and may require separate attention if its use is desired.
-```
