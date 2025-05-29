@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kryptonite Wallet Verifier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Kryptonite Wallet Verifier</h1>
+            <p>Check crypto wallet addresses for potential risks.</p>
+        </header>
+        
+        <main>
+            <div class="input-section">
+                <input type="text" id="walletAddress" placeholder="Enter wallet address">
+                <button id="verifyButton">Verify Wallet</button>
+            </div>
+            
+            <div id="loadingIndicator" style="display: none;">
+                <p>Loading...</p> 
+                <!-- A more sophisticated spinner could be added here later -->
+            </div>
+            
+            <div id="resultsArea">
+                <!-- Results will be displayed here -->
+            </div>
+        </main>
+        
+        <footer>
+            <p>Powered by Kryptonite API</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -10,6 +10,8 @@ services:
       - "8080:8000" # Exposing Kryptonite app on host port 8080, container port 8000
     environment:
       - GRAPHSENSE_API_URL=http://graphsense-api:9000 # Placeholder, to be actually used by main.py
+      - POLKADOT_ADDRESS_JSON_URL=https://polkadot.js.org/phishing/address.json # Default URL for scam addresses
+      - POLKADOT_ALL_JSON_URL=https://polkadot.js.org/phishing/all.json # Default URL for scam domains
     # depends_on:
     #   - graphsense-api # Uncomment if/when graphsense-api service is available
     volumes:
