@@ -6,7 +6,7 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 
 *   Web UI for easy address verification.
 *   Verifies crypto addresses against a user-maintained local `blacklist.txt`.
-*   Integrates with Polkadot.js phishing lists (`address.json` for scam addresses, `all.json` for scam domains) to identify known malicious entities, primarily within the Polkadot/Substrate ecosystem.
+*   Integrates with Polkadot.js phishing lists (`address.json` for scam addresses) and additional sources like the spmedia threat intel feed (for scam domains) to identify known malicious entities. The Polkadot.js address list is primarily focused on the Polkadot/Substrate ecosystem.
 *   Integrates with a GraphSense API (if configured) to retrieve address tags (e.g., identifying tags like "exchange", "miner", "scam").
 *   Provides a risk level and score based on local blacklist status, Polkadot.js scam lists, and GraphSense tags.
 *   Containerized with Docker and managed via `docker-compose`.
@@ -20,7 +20,7 @@ Kryptonite is a FastAPI-based application designed to check cryptocurrency walle
 *   `requirements.txt`: Python dependencies.
 *   `blacklist.txt`: A list of cryptocurrency addresses manually added by the user for blacklisting.
 *   `graphsense-REST/`: Intended location for a GraphSense API implementation (currently appears to be missing from this repository).
-*   `scripts/update_blacklists.sh`: A script presumably for updating blacklist files (its functionality is not fully integrated or documented within the core app).
+*   `scripts/update_blacklists.sh`: A script originally intended for updating blacklists. Currently, its primary crypto address source (CryptoScamDB) is unavailable, and its OFAC SDN list parsing is not reliable for direct address extraction. Manual review and updates to this script would be needed to make it a robust, automated blacklist generator.
 
 ## Installation and Usage
 
@@ -36,30 +36,40 @@ Follow these steps to get the Kryptonite Wallet Verifier web application running
 1.  **Clone the Repository:**
     Open your terminal and clone the project from GitHub:
     ```bash
-    git clone https://github.com/your-username/kryptonite.git 
+    git clone https://github.com/your-username/kryptonite.git
     # Replace with the actual repository URL if you are forking or have a specific source
     ```
     Navigate into the cloned directory:
     ```bash
-    cd kryptonite 
+    cd kryptonite
     # Or your chosen directory name if different
     ```
 
 2.  **Customize Local Blacklist (Optional):**
     You can add cryptocurrency addresses you want to personally blacklist to the `blacklist.txt` file located in the root of the project. Add one address per line. These addresses will be flagged as "critical" risk by the application.
 
-3.  **Advanced Configuration (Optional):**
-    The application uses default URLs for fetching external data (Polkadot.js lists) and allows for an optional GraphSense API integration. If you need to use a custom GraphSense instance or different Polkadot.js phishing list URLs, you can configure them by editing the `environment` section of the `kryptonite-app` service in the `docker-compose.yml` file:
+3.  **Advanced Configuration - External Blacklist Feeds (Optional):**
+    The application uses default URLs for fetching external data. The `KNOWN_SCAM_DOMAINS` set is populated by combining data from Polkadot.js `all.json` and the spmedia threat intel feed. If you need to use custom URLs, you can configure them by editing the `environment` section of the `kryptonite-app` service in the `docker-compose.yml` file:
+    *   `GRAPHSENSE_API_BASE_URL`: For your GraphSense instance (if used).
+    *   `POLKADOT_ADDRESS_JSON_URL`: URL for the Polkadot.js scam address list.
+        *   Default: `https://polkadot.js.org/phishing/address.json`
+    *   `POLKADOT_ALL_JSON_URL`: URL for the Polkadot.js scam domain list (contributes to `KNOWN_SCAM_DOMAINS`).
+        *   Default: `https://polkadot.js.org/phishing/all.json`
+    *   `SPMEDIA_SCAM_DOMAINS_URL`: URL for the spmedia scam domain list (contributes to `KNOWN_SCAM_DOMAINS`).
+        *   Default: `https://raw.githubusercontent.com/spmedia/Crypto-Scam-and-Crypto-Phishing-Threat-Intel-Feed/main/detected_urls.txt`
+
+    Example `docker-compose.yml` snippet:
     ```yaml
     services:
       kryptonite-app:
         # ... other configurations ...
         environment:
-          - GRAPHSENSE_API_BASE_URL=http://your-graphsense-api-url:9000 # Example for GraphSense
-          - POLKADOT_ADDRESS_JSON_URL=https://your-custom-address-list.json # Example for Polkadot addresses
-          - POLKADOT_ALL_JSON_URL=https://your-custom-domain-list.json # Example for Polkadot domains
+          - GRAPHSENSE_API_BASE_URL=http://your-graphsense-api-url:9000
+          - POLKADOT_ADDRESS_JSON_URL=https://your-custom-polkadot-address-list.json
+          - POLKADOT_ALL_JSON_URL=https://your-custom-polkadot-domain-list.json
+          - SPMEDIA_SCAM_DOMAINS_URL=https://your-custom-spmedia-domain-list.txt
     ```
-    If `GRAPHSENSE_API_BASE_URL` is not set or the API is unavailable, GraphSense checks will be skipped, and this will be noted in the results.
+    If `GRAPHSENSE_API_BASE_URL` is not set or the API is unavailable, GraphSense checks will be skipped.
 
 4.  **Build and Run the Application:**
     In your terminal, from the project's root directory (e.g., `kryptonite/`), run:
@@ -73,17 +83,13 @@ Follow these steps to get the Kryptonite Wallet Verifier web application running
 
 5.  **Access the Web Application:**
     Once the application is running (you'll typically see messages like `Uvicorn running on http://0.0.0.0:8000` in the logs from the `kryptonite-app` service), open your web browser and navigate to:
-    [http://localhost:8080](http://localhost:8080) 
+    [http://localhost:8080](http://localhost:8080)
     (Port 8080 on your host machine is mapped to port 8000 in the container as per `docker-compose.yml`).
 
 6.  **Using the Web App:**
     *   On the main page, you'll see an input field. Enter the cryptocurrency wallet address you want to check.
     *   Click the "Verify Wallet" button.
-    *   The verification results will be displayed below the input field. This includes:
-        *   Whether the address is on your local `blacklist.txt`.
-        *   Whether the address is on the Polkadot.js scam address list.
-        *   Tags from the GraphSense API (if configured and the address is found).
-        *   An overall risk level and a numerical risk score.
+    *   The verification results will be displayed below the input field.
 
 ## Direct API Usage (Advanced)
 
@@ -106,48 +112,28 @@ For developers or automated systems, the Kryptonite API can be accessed directly
     *   Description: Verifies a given cryptocurrency address against configured blacklists and (optionally) GraphSense.
     *   Path Parameter:
         *   `address` (string, required): The cryptocurrency address to verify.
-    *   Example Response (address not on any blacklists, GraphSense configured):
+    *   Example Response:
         ```json
         {
           "address": "1SomeBitcoinAddressXYZ",
           "sanctioned_by_local_blacklist": false,
           "on_polkadot_scam_list": false,
-          "graphsense_tags": [
-            {
-              "label": "Exchange",
-              "source": "SomeGraphSenseSource",
-              "category": "organization",
-              "abuse": null,
-              "tagpack_uri": "http://example.com/tagpack",
-              "lastmod": 1678886400000,
-              "active": true,
-              "currency": "btc"
-            }
-          ],
-          "risk_level": "low", 
-          "risk_score": 10     
-        }
-        ```
-    *   Example Response (address on Polkadot.js scam list):
-        ```json
-        {
-          "address": "1PolkadotScammerAddressABC",
-          "sanctioned_by_local_blacklist": false,
-          "on_polkadot_scam_list": true,
-          "graphsense_tags": ["GraphSense API not configured"], 
-          "risk_level": "high", 
-          "risk_score": 90
+          "graphsense_tags": [/* ... GraphSense data ... */],
+          "risk_level": "low",
+          "risk_score": 10
         }
         ```
 
 ## Development Notes
 
-*   The `kryptonite-app` service in `docker-compose.yml` mounts the current directory into `/app` in the container. This allows for live reloading of code changes in `main.py` if `uvicorn` is run with the `--reload` flag (Note: the current `Dockerfile` CMD does not include `--reload`. For development, you might want to adjust the CMD in the `Dockerfile` or override the command in `docker-compose.yml`).
+*   The `kryptonite-app` service in `docker-compose.yml` mounts the current directory into `/app` in the container. This allows for live reloading of code changes in `main.py` if `uvicorn` is run with the `--reload` flag.
 
 ## Important Considerations & Missing Components
 
-*   **GraphSense API Implementation:** The GraphSense API is an optional external dependency. If you wish to use it, you need to set up your own instance and configure its URL via `GRAPHSENSE_API_BASE_URL`. The repository does not provide a GraphSense API.
-*   **Scope of Polkadot.js Lists:** The scam lists from Polkadot.js primarily focus on the Polkadot/Substrate ecosystem. While they provide valuable data, they may not cover scams on all other blockchains.
-*   **Sanction Screening:** This application, with its current data sources, does **not** perform comprehensive global sanction screening (e.g., OFAC lists). For such requirements, dedicated commercial data providers or official government sources should be consulted.
-*   **`scripts/update_blacklists.sh`:** The functionality and integration of this script are not fully clear from the existing codebase and may require separate attention if its use is desired.
+*   **GraphSense API Implementation:** The GraphSense API is an optional external dependency.
+*   **Scope of External Lists:**
+    *   The Polkadot.js address list primarily focuses on the Polkadot/Substrate ecosystem.
+    *   The `KNOWN_SCAM_DOMAINS` set (populated from Polkadot.js and spmedia) contains domains associated with various crypto scams but is not exhaustive for all blockchains or scam types. Domain data is loaded but not directly used in the `/verify/{address}` endpoint's risk scoring by default.
+*   **Sanction Screening:** This application does **not** perform comprehensive global sanction screening (e.g., OFAC lists).
+*   **`scripts/update_blacklists.sh`:** This script is **currently not functional** for automatically generating up-to-date crypto address blacklists. Its primary address source (CryptoScamDB) is defunct, and its OFAC SDN list parsing logic is not suitable for reliable direct extraction of crypto addresses. Significant updates would be required to make it a dependable tool.
 ```

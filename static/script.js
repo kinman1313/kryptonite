@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adjust the URL if your FastAPI app is running on a different port or domain
             // For local development where FastAPI serves this static file, /verify/ should work.
             const response = await fetch(`/verify/${encodeURIComponent(address)}`);
-            
+
             if (!response.ok) {
                 let errorDetail = "Failed to fetch data.";
                 try {
@@ -50,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
         resultCard.className = 'result-item';
 
         let content = `<h3>Verification Results for: ${escapeHTML(data.address)}</h3>`;
-        
+
         content += `<p><span class="label">Sanctioned by Local Blacklist:</span> <span class="value-${data.sanctioned_by_local_blacklist}">${data.sanctioned_by_local_blacklist}</span></p>`;
         content += `<p><span class="label">On Polkadot Scam List:</span> <span class="value-${data.on_polkadot_scam_list}">${data.on_polkadot_scam_list}</span></p>`;
-        
+
         content += `<p><span class="label">Risk Level:</span> <span class="risk-${data.risk_level.toLowerCase()}">${escapeHTML(data.risk_level)}</span></p>`;
         content += `<p><span class="label">Risk Score:</span> ${data.risk_score}/100</p>`;
 
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             content += `<p><span class="label">GraphSense Tags:</span> No tags found or API not responsive.</p>`;
         }
-        
+
         resultCard.innerHTML = content;
         resultsArea.appendChild(resultCard);
     }
