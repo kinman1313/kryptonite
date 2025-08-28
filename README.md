@@ -129,11 +129,3 @@ For developers or automated systems, the Kryptonite API can be accessed directly
 *   The `kryptonite-app` service in `docker-compose.yml` mounts the current directory into `/app` in the container. This allows for live reloading of code changes in `main.py` if `uvicorn` is run with the `--reload` flag.
 
 ## Important Considerations & Missing Components
-
-*   **GraphSense API Implementation:** The GraphSense API is an optional external dependency.
-*   **Scope of External Lists:**
-    *   The Polkadot.js address list primarily focuses on the Polkadot/Substrate ecosystem.
-    *   The `KNOWN_SCAM_DOMAINS` set (populated from Polkadot.js and spmedia) contains domains associated with various crypto scams but is not exhaustive for all blockchains or scam types. Domain data is loaded but not directly used in the `/verify/{address}` endpoint's risk scoring by default.
-*   **Sanction Screening:** This application does **not** perform comprehensive global sanction screening (e.g., OFAC lists).
-*   **`scripts/update_blacklists.sh`:** This script is **currently not functional** for automatically generating up-to-date crypto address blacklists. Its primary address source (CryptoScamDB) is defunct, and its OFAC SDN list parsing logic is not suitable for reliable direct extraction of crypto addresses. Significant updates would be required to make it a dependable tool.
-```
